@@ -22,23 +22,35 @@ def create(request: schema.Blog, db: Session = Depends(getDB)):
     db.add(new_blog)
     db.commit()
     db.refresh(new_blog)
+
     return new_blog
 
 @app.delete('/blog/{id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete(id: int, db: Session = Depends(getDB)):
-    db.query(models.Blog).where(models.Blog.id == id).delete()
+    blog = db.query(models.Blog).where(models.Blog.id == id)
+    if not blog.first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"blog with id {id} not found")
+    blog.delete()
     db.commit()
+
     return "deleted"
 
 @app.put('/blog/{id}', status_code=status.HTTP_202_ACCEPTED)
 def update(id: int, request: schema.Blog, db: Session = Depends(getDB)):
-    db.query(models.Blog).where(models.Blog.id == id).update({'title': request.title, 'body': request.body})
+    blog = db.query(models.Blog).where(models.Blog.id == id)
+    if not blog.first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"blog with id {id} not found")
+    blog.update({'title': request.title, 'body': request.body})
     db.commit()
+
     return "updated"
 
 @app.get('/blog', status_code=status.HTTP_200_OK)
 def all(db: Session = Depends(getDB)):
     blogs = db.query(models.Blog).all()
+
     return blogs
 
 @app.get('/blog/{id}', status_code=status.HTTP_200_OK)
