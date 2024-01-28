@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, status, Depends
 from sqlalchemy.orm import Session
 import uvicorn
+from typing import List
 
 from blog import schema, models
 from blog.database import engine, SessionLocal
@@ -47,13 +48,13 @@ def update(id: int, request: schema.Blog, db: Session = Depends(getDB)):
 
     return "updated"
 
-@app.get('/blog', status_code=status.HTTP_200_OK)
+@app.get('/blog', status_code=status.HTTP_200_OK, response_model=List[schema.ResponseBlog])
 def all(db: Session = Depends(getDB)):
     blogs = db.query(models.Blog).all()
 
     return blogs
 
-@app.get('/blog/{id}', status_code=status.HTTP_200_OK)
+@app.get('/blog/{id}', status_code=status.HTTP_200_OK, response_model=schema.ResponseBlog)
 def show(id: int, db: Session = Depends(getDB)):
     blog = db.query(models.Blog).where(models.Blog.id==id).first()
     if not blog:
